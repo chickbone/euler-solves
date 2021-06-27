@@ -6,6 +6,7 @@ import Control.Monad.Fix (fix)
 import Data.Bits
 import Data.Maybe
 import Data.Monoid
+import Debug.Trace
 
 ans1 :: Int -> Int
 ans1 max = fromMaybe 0 $ max <$ guard (max `mod` 3 == 0 || max `mod` 5 == 0)
@@ -78,3 +79,37 @@ sum' :: (Num a) => [a] -> a
 sum' = foldr (\x -> ($!) (+ x)) 0
 
 fib a b = a : b : zipWith (+) (fib a b) (tail $ fib a b)
+
+data Tree a = Tree a (Tree a) (Tree a) deriving (Show)
+
+vertex (Tree c _ _) = c
+
+left (Tree _ l _) = l
+
+right (Tree _ _ r) = r
+
+instance Functor Tree where
+  fmap f (Tree c l r) = Tree (f c) (fmap f l) (fmap f r)
+
+instance Applicative Tree where
+  pure a = genTree (const a)
+  liftA2 op (Tree c1 l1 r1) (Tree c2 l2 r2) = Tree (c1 `op` c2) (liftA2 op l1 l2) (liftA2 op r1 r2)
+
+findTree :: Show a => Tree a -> Integer -> a
+findTree tree i = f tree $ (i + 1) `clearBit` fromMaybe 0 (bitSizeMaybe i)
+  where
+    f (Tree child _ _) 0 = child
+    f (Tree c l r) b
+      | b .&. 1 == 1 = trace ("left:  " <> show b <> ";" <> show c) $ f l (b `shiftR` 1)
+      | b .&. 1 == 0 = trace ("right: " <> show b <> ";" <> show c) $ f r (b `shiftR` 1)
+
+genTree :: (Integer -> b) -> Tree b
+genTree f = gen 0
+  where
+    gen n = Tree (f n) (gen $ n `shiftL` 1 + 1) (gen $ n `shiftL` 1 + 2)
+
+memofix :: Show b => ((Integer -> b) -> (Integer -> b)) -> (Integer -> b)
+memofix f = memof
+  where
+    memof = f $ findTree tdl
+    tdl = genTree memof
