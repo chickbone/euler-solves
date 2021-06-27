@@ -95,13 +95,13 @@ instance Applicative Tree where
   pure a = genTree (const a)
   liftA2 op (Tree c1 l1 r1) (Tree c2 l2 r2) = Tree (c1 `op` c2) (liftA2 op l1 l2) (liftA2 op r1 r2)
 
-findTree :: Show a => Tree a -> Integer -> a
-findTree tree i = f tree $ (i + 1) `clearBit` fromMaybe 0 (bitSizeMaybe i)
+Tree c _ _ !!! 0 = c
+Tree _ tl tr !!! n =
+  if n .&. 1 == 0
+    then tl !!! top
+    else tr !!! (top -1)
   where
-    f (Tree child _ _) 0 = child
-    f (Tree c l r) b
-      | b .&. 1 == 1 = trace ("left:  " <> show b <> ";" <> show c) $ f l (b `shiftR` 1)
-      | b .&. 1 == 0 = trace ("right: " <> show b <> ";" <> show c) $ f r (b `shiftR` 1)
+    top = n `shiftR` 1
 
 genTree :: (Integer -> b) -> Tree b
 genTree f = gen 0
@@ -111,5 +111,5 @@ genTree f = gen 0
 memofix :: Show b => ((Integer -> b) -> (Integer -> b)) -> (Integer -> b)
 memofix f = memof
   where
-    memof = f $ findTree tdl
+    memof = f (tdl !!!)
     tdl = genTree memof
