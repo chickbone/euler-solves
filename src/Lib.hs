@@ -21,8 +21,7 @@ ans4 xs = do
   x <- xs
   y <- xs
   let xy = x * y
-  guard (xy == revInt xy)
-  return xy
+  xy <$ guard (xy == revInt xy)
   where
     revInt = read . reverse . show :: (Int -> Int)
 
@@ -61,10 +60,17 @@ ans14 = fix $ \f y -> (trans y 0, y)
     trans x n
       | x == 1 = n
       | x .&. 1 == 0 = trans (x `shiftR` 1) ((+ 1) $! n)
-      | x .&. 1 == 1 = trans ((3 * x + 1) `shiftR` 1) ((+ 2) $! n)
+      | otherwise = trans ((3 * x + 1) `shiftR` 1) ((+ 2) $! n)
 
 -- | Lattice paths
 ans15 x = (2 * x) `comb` x
+
+-- | Fractional dight sum
+ans20 = dightsum . frac
+
+ans30 ex = filter (\x -> x == f x) [2 .. 10 ^ (ex + 1)]
+  where
+    f = fromIntegral . sum' . map (^ ex) . dights
 
 -- | Dice Game
 -- Peter has nine four-sided pyramidal dice, each with faces numbered 1, 2, 3, 4.
