@@ -6,7 +6,7 @@ import Data.Bits
 import Tree
 
 sum' :: (Num a) => [a] -> a
-sum' = foldr (\x -> ($!) (+ x)) 0
+sum' = foldr1 (\x -> ($!) (+ x))
 
 memofib = memofix $ \f n -> if n < 2 then n else f (n -1) + f (n -2)
 
