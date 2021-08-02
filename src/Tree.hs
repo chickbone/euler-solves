@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveFunctor #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 module Tree (Tree, memofix) where
 
@@ -19,11 +20,12 @@ instance Applicative Tree where
   pure a = genTree (const a)
   liftA2 op (Tree c1 l1 r1) (Tree c2 l2 r2) = Tree (c1 `op` c2) (liftA2 op l1 l2) (liftA2 op r1 r2)
 
+(!!!) :: Tree a -> Integer -> a
 t !!! 0 = t ^. vertex
 t !!! n =
   if n .&. 1 == 1
-    then t ^. leftT !!! top
-    else t ^. rightT !!! (top -1)
+    then (t ^. leftT) !!! top
+    else (t ^. rightT) !!! (top -1)
   where
     top = n `shiftR` 1
 

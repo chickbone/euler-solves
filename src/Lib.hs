@@ -4,6 +4,7 @@ import Control.Applicative
 import Control.Monad
 import Control.Monad.Fix (fix)
 import Data.Bits
+import Data.Function ((&))
 import Data.Maybe
 import Data.Monoid
 import Debug.Trace
@@ -11,17 +12,13 @@ import Func
 import Tree
 
 ans1 :: Int -> Int
-ans1 max = fromMaybe 0 $ max <$ guard (max `mod` 3 == 0 || max `mod` 5 == 0)
+ans1 max = sum' $ filter (\x -> x `mod` 5 * (x `mod` 3) == 0) [1 .. max]
 
 ans2 :: Integer -> Integer
-ans2 x = sum' . takeWhile (<= x) $ map memofib [(3 :: Integer), 5 ..]
+ans2 x = [(3 :: Integer), 5 ..] & fmap memofib & takeWhile (<= x) & sum'
 
 ans4 :: [Int] -> [Int]
-ans4 xs = do
-  x <- xs
-  y <- xs
-  let xy = x * y
-  xy <$ guard (xy == revInt xy)
+ans4 xs = [x * y | x <- xs, y <- xs, x <= y, x * y == revInt (x * y)]
   where
     revInt = read . reverse . show :: (Int -> Int)
 
@@ -42,18 +39,19 @@ ans7 = const []
 -- | Special Pythagorean triplet
 -- Pythagorean triplet : a^2 + b^2 = c^2
 -- a = (n^2 - m^2) ,b = (4n^2m^2) ,c = (n^2 + m^2)
--- a + b + c = (4m^2+2)n^2
+-- a + b + c = (4m^2 + 2) * n^2
 ans9 :: Int -> [Int]
-ans9 n = do
+ans9 j = do
   n <- [1 .. 32]
   m <- [1 .. 32]
-  guard (n > m)
+  guard (n < m)
   let a = n ^ 2 - m ^ 2
   let b = 2 * n * m
   let c = n ^ 2 + m ^ 2
-  guard $ a + b + c == n
+  guard $ a + b + c == j
   pure $ a * b * c
 
+ans14 :: Integer -> (Int, Integer)
 ans14 = fix $ \f y -> (trans y 0, y)
   where
     trans :: Integer -> Int -> Int
@@ -70,7 +68,7 @@ ans20 = dightsum . frac
 
 ans30 ex = filter (\x -> x == f x) [2 .. 10 ^ (ex + 1)]
   where
-    f = fromIntegral . sum' . map (^ ex) . dights
+    f = fromIntegral . sum' . fmap (^ ex) . dights
 
 -- | Dice Game
 -- Peter has nine four-sided pyramidal dice, each with faces numbered 1, 2, 3, 4.
@@ -86,4 +84,4 @@ paterns c4 c6 = do
   peters <- replicateM c4 [1 .. 4]
   colins <- replicateM c6 [1 .. 6]
   guard $ sum' peters > sum' colins
-  return (peters, colins)
+  pure (peters, colins)
